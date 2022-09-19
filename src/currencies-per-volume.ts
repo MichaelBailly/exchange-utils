@@ -1,4 +1,13 @@
+import { MongoClient } from 'mongodb';
 import pThrottle from 'p-throttle';
+
+const MONGO_DB = process.env.MONGO_DB;
+const MONGO_COLLECTION = process.env.MONGO_COLLECTION;
+
+if (!MONGO_DB || !MONGO_COLLECTION) {
+  throw new Error('MONGO_DB and MONGO_COLLECTION env vars are required');
+}
+let mongoclient: null | MongoClient = null;
 
 const throttle = pThrottle({
   limit: 1,
@@ -42,6 +51,10 @@ async function run() {
   sortedSymbols.forEach((symbol) => {
     console.log(`${symbol.pair} -> ${symbol.volUsdt}`);
   });
+  updateMongoCollection(sortedSymbols);
+  if (mongoclient) {
+    mongoclient.close();
+  }
 }
 
 async function getSymbols() {
@@ -56,6 +69,28 @@ async function getSymbols() {
   });
 
   return filteredSymbols;
+}
+
+async function updateMongoCollection(data: SymbolVolume[]): Promise<void> {
+  const mongoCollection = await getMongoCollection();
+  await mongoCollection.deleteMany({});
+  await mongoCollection.insertMany(
+    data.map((item) => {
+      return {
+        pair: item.pair,
+        volUsdt: item.volUsdt,
+      };
+    })
+  );
+}
+
+async function getMongoCollection() {
+  if (!MONGO_DB || !MONGO_COLLECTION) {
+    throw new Error('MONGO_DB and MONGO_COLLECTION env vars are required');
+  }
+  mongoclient = new MongoClient(MONGO_DB, {});
+  await mongoclient.connect();
+  return mongoclient.db().collection(MONGO_COLLECTION);
 }
 
 function isExchangeInfoResponse(
@@ -170,5 +205,10 @@ type BinanceKline = [
   string, // Taker buy quote asset volume
   string // Ignore
 ];
+
+type SymbolVolume = {
+  pair: string;
+  volUsdt: number;
+};
 
 run();
