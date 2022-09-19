@@ -1,0 +1,28 @@
+{
+  "name": "exchange-utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "currencies-per-volume.js",
+  "scripts": {
+    "build": "ncc build src/currencies-per-volume.ts",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MichaelBailly/exchange-utils.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MichaelBailly/exchange-utils/issues"
+  },
+  "homepage": "https://github.com/MichaelBailly/exchange-utils#readme",
+  "devDependencies": {
+    "@vercel/ncc": "^0.34.0",
+    "prettier": "^2.7.1",
+    "typescript": "^4.8.3"
+  },
+  "dependencies": {
+    "p-throttle": "^5.0.0"
+  }
+}
