@@ -51,7 +51,8 @@ async function run() {
   sortedSymbols.forEach((symbol) => {
     console.log(`${symbol.pair} -> ${symbol.volUsdt}`);
   });
-  updateMongoCollection(sortedSymbols);
+
+  await updateMongoCollection(sortedSymbols);
   if (mongoclient) {
     mongoclient.close();
   }
