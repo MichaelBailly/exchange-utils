@@ -1,5 +1,7 @@
 import { MongoClient } from 'mongodb';
 import pThrottle from 'p-throttle';
+import { isBinanceKline } from './types/BinanceKline';
+import { isExchangeInfoResponse } from './types/ExchangeInfoResponse';
 
 const MONGO_DB = process.env.MONGO_DB;
 const MONGO_COLLECTION = process.env.MONGO_COLLECTION;
@@ -93,119 +95,6 @@ async function getMongoCollection() {
   await mongoclient.connect();
   return mongoclient.db().collection(MONGO_COLLECTION);
 }
-
-function isExchangeInfoResponse(
-  response: unknown
-): response is ExchangeInfoResponse {
-  if (typeof response !== 'object' || response === null) {
-    return false;
-  }
-
-  const exchangeInfoResponse = response as ExchangeInfoResponse;
-  if (!Array.isArray(exchangeInfoResponse.symbols)) {
-    return false;
-  }
-
-  if (
-    exchangeInfoResponse.symbols.every(
-      (s) =>
-        typeof s.symbol === 'string' &&
-        typeof s.status === 'string' &&
-        typeof s.quoteAsset === 'string'
-    )
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-function isBinanceKline(response: unknown): response is BinanceKline {
-  if (!Array.isArray(response)) {
-    return false;
-  }
-  if (response.length !== 12) {
-    return false;
-  }
-  if (!(typeof response[0] === 'number')) {
-    return false;
-  }
-  if (!(typeof response[1] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[2] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[3] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[4] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[5] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[6] === 'number')) {
-    return false;
-  }
-  if (!(typeof response[7] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[8] === 'number')) {
-    return false;
-  }
-  if (!(typeof response[9] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[10] === 'string')) {
-    return false;
-  }
-  if (!(typeof response[11] === 'string')) {
-    return false;
-  }
-
-  return true;
-}
-
-type ExchangeInfoResponse = {
-  timezone: string;
-  serverTime: number;
-  symbols: BinanceSymbol[];
-};
-
-type BinanceSymbol = {
-  symbol: string;
-  status: string;
-  baseAsset: string;
-  baseAssetPrecision: number;
-  quoteAsset: string;
-  quotePrecision: number;
-  quoteAssetPrecision: number;
-  baseCommissionPrecision: number;
-  quoteCommissionPrecision: number;
-  orderTypes: string[];
-  icebergAllowed: boolean;
-  ocoAllowed: boolean;
-  quoteOrderQtyMarketAllowed: boolean;
-  isSpotTradingAllowed: boolean;
-  isMarginTradingAllowed: boolean;
-  permissions: string[];
-};
-
-type BinanceKline = [
-  number, // Open time
-  string, // Open
-  string, // High
-  string, // Low
-  string, // Close
-  string, // Volume
-  number, // Close time
-  string, // Quote asset volume
-  number, // Number of trades
-  string, // Taker buy base asset volume
-  string, // Taker buy quote asset volume
-  string // Ignore
-];
 
 type SymbolVolume = {
   pair: string;
