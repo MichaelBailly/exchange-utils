@@ -5,7 +5,9 @@
   "main": "currencies-per-volume.js",
   "scripts": {
     "build": "ncc build src/currencies-per-volume.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "build:cmc": "ncc build src/currencies-per-marketcap.ts -o dist/cmc",
+    "start:cmc": "node dist/cmc/index.js"
   },
   "repository": {
     "type": "git",
