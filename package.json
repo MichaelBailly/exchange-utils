@@ -5,7 +5,9 @@
   "main": "currencies-per-volume.js",
   "scripts": {
     "build": "ncc build src/currencies-per-volume.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "build:importer": "ncc build src/klines-importer.ts -o dist/importer --target es2022",
+    "start:importer": "node dist/importer/index.js"
   },
   "repository": {
     "type": "git",
