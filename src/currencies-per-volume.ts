@@ -1,26 +1,18 @@
-import { MongoClient } from 'mongodb';
 import pThrottle from 'p-throttle';
+import { getKlines, getSymbols } from './exchanges/binance';
+import { close as closeMongoConnection, getMongoCollection } from './mongodb';
 import { isBinanceKline } from './types/BinanceKline';
-import { isExchangeInfoResponse } from './types/ExchangeInfoResponse';
-
-const MONGO_DB = process.env.MONGO_DB;
-const MONGO_COLLECTION = process.env.MONGO_COLLECTION;
-
-if (!MONGO_DB || !MONGO_COLLECTION) {
-  throw new Error('MONGO_DB and MONGO_COLLECTION env vars are required');
-}
-let mongoclient: null | MongoClient = null;
 
 const throttle = pThrottle({
   limit: 1,
   interval: 3000,
 });
 
-const throttled = throttle(async (symbol) => {
-  const response = await fetch(
-    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=31`
-  );
-  return await response.json();
+const throttled = throttle(async (symbol: string) => {
+  return getKlines(symbol, {
+    interval: '1d',
+    limit: 31,
+  });
 });
 
 async function run() {
@@ -55,23 +47,7 @@ async function run() {
   });
 
   await updateMongoCollection(sortedSymbols);
-  if (mongoclient) {
-    mongoclient.close();
-  }
-}
-
-async function getSymbols() {
-  const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-  const data = await response.json();
-  if (!isExchangeInfoResponse(data)) {
-    throw new Error('Invalid response');
-  }
-  const symbols = data.symbols;
-  const filteredSymbols = symbols.filter((symbol) => {
-    return symbol.status === 'TRADING' && symbol.quoteAsset === 'USDT';
-  });
-
-  return filteredSymbols;
+  await closeMongoConnection();
 }
 
 async function updateMongoCollection(data: SymbolVolume[]): Promise<void> {
@@ -85,15 +61,6 @@ async function updateMongoCollection(data: SymbolVolume[]): Promise<void> {
       };
     })
   );
-}
-
-async function getMongoCollection() {
-  if (!MONGO_DB || !MONGO_COLLECTION) {
-    throw new Error('MONGO_DB and MONGO_COLLECTION env vars are required');
-  }
-  mongoclient = new MongoClient(MONGO_DB, {});
-  await mongoclient.connect();
-  return mongoclient.db().collection(MONGO_COLLECTION);
 }
 
 type SymbolVolume = {
